@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FollowPulse – Instagram follower tracker</title>
+<link rel="icon" href="/logo.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--g:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);--glass:rgba(255,255,255,.08);--bd:rgba(255,255,255,.18);--mut:rgba(255,255,255,.62);--up:#4ade80;--down:#fb7185}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0b0713;color:#fff;font:15px/1.5 -apple-system,"Segoe UI",Inter,system-ui,sans-serif;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.55;z-index:-1}
+.o1{width:420px;height:420px;background:#d62976;top:-120px;left:-100px}
+.o2{width:380px;height:380px;background:#4f5bd5;top:30%;right:-140px}
+.o3{width:360px;height:360px;background:#fa7e1e;bottom:-120px;left:15%;opacity:.4}
+.glass{background:var(--glass);border:1px solid var(--bd);border-radius:22px;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.18)}
+.wrap{max-width:960px;margin:auto;padding:16px}
+nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.brand img{width:34px;height:34px;border-radius:9px}
+.btn{border:0;border-radius:999px;padding:10px 18px;color:#fff;font-weight:600;background:var(--g);cursor:pointer;font-size:14px}
+.btn.ghost{background:var(--glass);border:1px solid var(--bd)}
+h1{font-size:clamp(30px,7vw,52px);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+.grad{background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero{text-align:center;padding:16px 8px 6px}.hero p{color:var(--mut);max-width:520px;margin:0 auto 16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}
+.stat{padding:14px 8px;text-align:center}.stat b{display:block;font-size:clamp(16px,4.5vw,26px)}.stat span{color:var(--mut);font-size:12px}
+.bar{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.pill{padding:7px 14px;border-radius:999px;border:1px solid var(--bd);background:var(--glass);color:var(--mut);cursor:pointer;white-space:nowrap;font-size:13px}
+.pill.on{color:#fff;background:var(--g);border-color:transparent}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:transform .15s}
+.row:hover{transform:translateY(-2px)}
+.av{width:46px;height:46px;border-radius:50%;background:var(--g);display:grid;place-items:center;font-weight:700;position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nm b{display:block}.nm span{color:var(--mut);font-size:13px}
+.num{text-align:right}.num b{font-size:17px}
+.chips{display:flex;gap:5px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);white-space:nowrap}
+.up{color:var(--up)}.down{color:var(--down)}
+.ad{padding:18px;text-align:center;color:var(--mut);border-style:dashed;margin:22px 0;font-size:13px}
+h2{text-align:center;margin:36px 0 14px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.plan{padding:22px}.plan.pro{border-color:#d62976;box-shadow:0 0 40px rgba(214,41,118,.3)}
+.plan h3{margin:0}.price{font-size:34px;font-weight:800;margin:6px 0}.price small{font-size:14px;color:var(--mut);font-weight:400}
+.plan ul{padding-left:18px;color:var(--mut);margin:12px 0 0}
+input{width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.07);color:#fff;font-size:15px;outline:none}
+input::placeholder{color:var(--mut)}
+.form{display:flex;gap:8px;max-width:520px;margin:14px auto 0}
+.msg{min-height:20px;font-size:13px;margin-top:8px;color:var(--down)}.msg.ok{color:var(--up)}
+.badge{display:inline-block;background:rgba(250,126,30,.2);border:1px solid #fa7e1e;color:#fed7aa;border-radius:99px;padding:3px 12px;font-size:12px;margin-bottom:10px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+#modal.on{display:flex}#modal .glass{width:100%;max-width:640px;max-height:90vh;overflow:auto;padding:18px;background:rgba(20,12,30,.75)}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.mh button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:30px 0 20px}
+</style></head><body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="wrap">
+<nav class="glass"><div class="brand"><img src="/logo.png" alt="">FollowPulse</div><button class="btn" id="goPro">Go Pro</button></nav>
+
+<section class="hero">
+<span class="badge" id="demo" hidden>Demo data</span>
+<h1>Watch Instagram followers <span class="grad">rise &amp; fall</span></h1>
+<p>Daily follower tracking for public celebrity accounts. See who is gaining, who is losing, and by how much.</p>
+<button class="btn ghost" id="adminBtn">Admin: add account</button>
+<form class="form" id="addForm" hidden><input id="u" placeholder="Instagram username"><input id="k" type="password" placeholder="Admin key" style="max-width:140px"><button class="btn">Add</button></form>
+<div class="msg" id="msg"></div>
+</section>
+
+<section class="stats">
+<div class="stat glass"><b id="s1">–</b><span>Accounts tracked</span></div>
+<div class="stat glass"><b id="s2">–</b><span>Total followers</span></div>
+<div class="stat glass"><b id="s3" class="up">–</b><span>Top gainer (24h)</span></div>
+</section>
+
+<div class="bar" id="pills">
+<button class="pill on" data-s="subs">Followers</button><button class="pill" data-s="d1">24h</button><button class="pill" data-s="d7">7 days</button><button class="pill" data-s="d30">30 days</button>
+</div>
+<div id="list"></div>
+
+<div class="ad glass">Ad space – paste your Google AdSense code here</div>
+
+<h2 id="pricing" class="grad">Go Pro</h2>
+<section class="plans">
+<div class="plan glass"><h3>Free</h3><div class="price">$0</div>
+<ul><li>Top celebrity accounts</li><li>Daily updates</li><li>Growth charts</li></ul></div>
+<div class="plan glass pro"><h3>Pro</h3><div class="price">$4.99<small> / month</small></div>
+<ul><li>Track your own accounts (up to 50)</li><li>Gain/loss email alerts</li><li>CSV export</li><li>No ads</li></ul></div>
+</section>
+<form class="form" id="wl" style="margin-top:18px"><input id="em" type="email" placeholder="Your email for early access"><button class="btn">Join waitlist</button></form>
+<div class="msg" id="wmsg" style="text-align:center"></div>
+
+<footer>FollowPulse is not affiliated with or endorsed by Instagram. Counts are public data and may differ slightly from the app.</footer>
+</div>
+
+<div id="modal"><div class="glass"><div class="mh"><b id="mt"></b><button id="x" aria-label="Close">×</button></div>
+<canvas id="c1" height="170"></canvas><canvas id="c2" height="130" style="margin-top:12px"></canvas></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const short=n=>n==null?'–':n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+const fmt=n=>n==null?'–':(n>0?'+':n<0?'−':'')+short(Math.abs(n));
+const cls=n=>n>0?'up':n<0?'down':'';
+let data=[],sort='subs',charts=[];
+
+function say(el,t,ok){el.textContent=t;el.className='msg'+(ok?' ok':'')}
+function render(){
+  const L=[...data].sort((a,b)=>(b[sort]==null?-1e18:b[sort])-(a[sort]==null?-1e18:a[sort]));
+  $('list').innerHTML=L.length?L.map(c=>`<div class="row glass" data-id="${esc(c.id)}">
+    <div class="av">${esc((c.title||'?')[0].toUpperCase())}${c.thumb?`<img src="${esc(c.thumb)}" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>
+    <div class="nm"><b>${esc(c.title)}</b><span>${esc(c.handle)}</span></div>
+    <div class="num"><b>${short(c.subs)}</b><div class="chips">${[['24h',c.d1],['7d',c.d7],['30d',c.d30]].map(([l,v])=>`<span class="chip ${cls(v)}">${l} ${fmt(v)}</span>`).join('')}</div></div></div>`).join('')
+    :'<p style="text-align:center;color:var(--mut)">No accounts yet.</p>';
+  $('s1').textContent=data.length;
+  $('s2').textContent=short(data.reduce((a,c)=>a+(c.subs||0),0));
+  const g=[...data].filter(c=>c.d1!=null).sort((a,b)=>b.d1-a.d1)[0];
+  $('s3').textContent=g?g.handle+' '+fmt(g.d1):'Tomorrow';
+}
+async function load(){data=await (await fetch('/api/accounts')).json();render()}
+async function show(id){
+  const a=data.find(x=>x.id===id);
+  const h=await (await fetch('/api/history?id='+encodeURIComponent(id))).json();
+  $('mt').textContent=a.title+' ('+a.handle+')';$('modal').classList.add('on');
+  if(!window.Chart)return;
+  Chart.defaults.color='rgba(255,255,255,.7)';
+  charts.forEach(c=>c.destroy());
+  const labels=h.map(x=>x.day.slice(5)),diffs=h.map((x,i)=>i?x.subs-h[i-1].subs:0);
+  const grid={color:'rgba(255,255,255,.08)'},opt={plugins:{legend:{display:false}},scales:{x:{grid},y:{grid}}};
+  charts=[
+    new Chart($('c1'),{type:'line',data:{labels,datasets:[{label:'Followers',data:h.map(x=>x.subs),borderColor:'#fa7e1e',backgroundColor:'rgba(214,41,118,.25)',fill:true,tension:.3,pointRadius:0}]},options:opt}),
+    new Chart($('c2'),{type:'bar',data:{labels,datasets:[{label:'Daily change',data:diffs,backgroundColor:diffs.map(d=>d>=0?'#4ade80':'#fb7185'),borderRadius:4}]},options:opt})
+  ];
+}
+async function post(url,body,headers){
+  const r=await fetch(url,{method:'POST',headers:headers||{},body:JSON.stringify(body)});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||'Error');return j;
+}
+$('list').onclick=e=>{const r=e.target.closest('.row');if(r)show(r.dataset.id)};
+$('modal').onclick=e=>{if(e.target.id==='modal'||e.target.id==='x')$('modal').classList.remove('on')};
+$('pills').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;
+  document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('on',x===p));sort=p.dataset.s;render()};
+$('goPro').onclick=()=>$('pricing').scrollIntoView({behavior:'smooth'});
+$('adminBtn').onclick=()=>{$('addForm').hidden=!$('addForm').hidden};
+try{$('k').value=localStorage.getItem('fpk')||''}catch(e){}
+$('addForm').onsubmit=async e=>{e.preventDefault();say($('msg'),'Adding…',1);
+  try{await post('/api/add',{q:$('u').value},{'X-Admin-Key':$('k').value});
+    try{localStorage.setItem('fpk',$('k').value)}catch(e){}
+    $('u').value='';say($('msg'),'Added ✓',1);load()}catch(err){say($('msg'),err.message)}};
+$('wl').onsubmit=async e=>{e.preventDefault();
+  try{await post('/api/waitlist',{email:$('em').value});$('em').value='';say($('wmsg'),'You are on the list ✓',1)}catch(err){say($('wmsg'),err.message)}};
+fetch('/api/meta').then(r=>r.json()).then(m=>{$('demo').hidden=!m.demo});
+load();
+</script></body></html>
