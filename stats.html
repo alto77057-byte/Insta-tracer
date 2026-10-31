@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>App stats – FollowPulse</title><meta name="theme-color" content="#0b0713">
+<style>
+:root{--g:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);--mut:rgba(255,255,255,.65)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0b0713;color:#fff;font:15px/1.5 -apple-system,"Segoe UI",system-ui,sans-serif;padding:16px}
+.w{max-width:640px;margin:auto}.g{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:16px;margin-bottom:12px}
+h1{font-size:22px;margin:4px 0 12px}input{width:100%;padding:12px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:15px}
+button{margin-top:10px;width:100%;border:0;border-radius:99px;padding:12px;color:#fff;font-weight:600;background:var(--g);font-size:15px}
+.k{display:grid;grid-template-columns:1fr 1fr;gap:10px}.k div{background:rgba(255,255,255,.06);border-radius:14px;padding:12px;text-align:center}.k b{display:block;font-size:24px}.k span{color:var(--mut);font-size:12px}
+.t{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:6px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}.t span:not(:first-child){text-align:right}.t.h{color:var(--mut);font-size:12px}
+.n{color:var(--mut);font-size:12px}#m{color:#fb7185;min-height:20px;font-size:13px;margin-top:8px}
+</style></head><body><div class="w">
+<h1>App &amp; install stats</h1>
+<div class="g"><input id="k" type="password" placeholder="Admin key"><button id="b">Show stats</button><div id="m"></div></div>
+<div id="o" hidden>
+<div class="g k" id="k4"></div>
+<div class="g"><b>Last 14 days (Indian dates)</b><div id="tb"></div></div>
+<p class="n">Taps = people who pressed Install app. Installed = installs reported by Android Chrome (iPhone does not report installs). Opened = different phones that opened the installed app that day (works on iPhone too). Counts are approximate.</p>
+</div></div>
+<script>
+var $=function(i){return document.getElementById(i)};
+try{$('k').value=localStorage.getItem('fpk')||''}catch(e){}
+$('b').onclick=function(){
+  $('m').textContent='';
+  fetch('/api/stats',{headers:{'X-Admin-Key':$('k').value}}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Error');return j})}).then(function(s){
+    try{localStorage.setItem('fpk',$('k').value)}catch(e){}
+    var t=s.totals||{},days=s.days||{},today=new Date(Date.now()+19800000).toISOString().slice(0,10),td=days[today]||{};
+    $('k4').innerHTML=[[t.install_tap||0,'Install button taps'],[t.installed||0,'Installed (Android)'],[s.unique||0,'Different phones using the app'],[td.app_open||0,'Phones that opened it today']].map(function(x){return '<div><b>'+x[0].toLocaleString()+'</b><span>'+x[1]+'</span></div>'}).join('');
+    var ks=Object.keys(days).sort().reverse().slice(0,14);
+    $('tb').innerHTML='<div class="t h"><span>Date</span><span>Taps</span><span>Installed</span><span>Opened</span></div>'+ks.map(function(d){var x=days[d];return '<div class="t"><span>'+d+'</span><span>'+(x.install_tap||0)+'</span><span>'+(x.installed||0)+'</span><span>'+(x.app_open||0)+'</span></div>'}).join('');
+    $('o').hidden=false;
+  }).catch(function(e){$('m').textContent=e.message});
+};
+</script></body></html>
