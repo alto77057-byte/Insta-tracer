@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FollowPulse – Instagram follower tracker</title>
+<link rel="icon" href="/logo.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="description" content="Track Instagram follower gains and losses for public accounts, in Indian time. Free."><meta name="theme-color" content="#0b0713">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="FollowPulse">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--g:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);--glass:rgba(255,255,255,.08);--bd:rgba(255,255,255,.18);--mut:rgba(255,255,255,.62);--up:#4ade80;--down:#fb7185}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0b0713;color:#fff;font:15px/1.5 -apple-system,"Segoe UI",Inter,system-ui,sans-serif;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.55;z-index:-1}
+.o1{width:420px;height:420px;background:#d62976;top:-120px;left:-100px}
+.o2{width:380px;height:380px;background:#4f5bd5;top:30%;right:-140px}
+.o3{width:360px;height:360px;background:#fa7e1e;bottom:-120px;left:15%;opacity:.4}
+.glass{background:var(--glass);border:1px solid var(--bd);border-radius:22px;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.18)}
+.wrap{max-width:960px;margin:auto;padding:16px}
+nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.brand img{width:42px;height:auto;margin:-4px -2px -6px 0;filter:drop-shadow(0 4px 8px rgba(214,41,118,.4))}
+.btn{border:0;border-radius:999px;padding:10px 18px;color:#fff;font-weight:600;background:var(--g);cursor:pointer;font-size:14px}
+.btn.sm{padding:8px 14px;font-size:13px}
+.btn.ghost{background:var(--glass);border:1px solid var(--bd)}
+h1{font-size:clamp(30px,7vw,52px);line-height:1.1;margin:0 0 12px;letter-spacing:-.02em}
+.grad{background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero{text-align:center;padding:16px 8px 6px}.hero p{color:var(--mut);max-width:520px;margin:0 auto 16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}
+.stat{padding:14px 8px;text-align:center}.stat b{display:block;font-size:clamp(16px,4.5vw,26px)}.stat span{color:var(--mut);font-size:12px}
+.bar{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.pill{padding:7px 14px;border-radius:999px;border:1px solid var(--bd);background:var(--glass);color:var(--mut);cursor:pointer;white-space:nowrap;font-size:13px}
+.pill.on{color:#fff;background:var(--g);border-color:transparent}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:transform .15s}
+.row:hover{transform:translateY(-2px)}
+.av{width:46px;height:46px;border-radius:50%;background:var(--g);display:grid;place-items:center;font-weight:700;position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nm b{display:block}.nm span{color:var(--mut);font-size:13px}
+.num{text-align:right}.num b{font-size:17px}
+.chips{display:flex;gap:5px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.08);white-space:nowrap}
+.up{color:var(--up)}.down{color:var(--down)}
+.ad{padding:18px;text-align:center;color:var(--mut);border-style:dashed;margin:22px 0;font-size:13px}
+h2{text-align:center;margin:36px 0 14px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.plan{padding:22px}.plan.pro{border-color:#d62976;box-shadow:0 0 40px rgba(214,41,118,.3)}
+.plan h3{margin:0}.price{font-size:34px;font-weight:800;margin:6px 0}.price small{font-size:14px;color:var(--mut);font-weight:400}
+.plan ul{padding-left:18px;color:var(--mut);margin:12px 0 0}
+input{width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.07);color:#fff;font-size:15px;outline:none}
+input::placeholder{color:var(--mut)}
+.form{display:flex;gap:8px;max-width:520px;margin:14px auto 0}
+.msg{min-height:20px;font-size:13px;margin-top:8px;color:var(--down)}.msg.ok{color:var(--up)}
+.badge{display:inline-block;background:rgba(250,126,30,.2);border:1px solid #fa7e1e;color:#fed7aa;border-radius:99px;padding:3px 12px;font-size:12px;margin-bottom:10px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+#modal.on{display:flex}#modal .glass{width:100%;max-width:640px;max-height:90vh;overflow:auto;padding:18px;background:rgba(20,12,30,.75)}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.mh button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:rgba(255,255,255,.06);border-radius:14px;padding:10px 6px;text-align:center}
+.kpi b{display:block;font-size:15px}.kpi span{color:var(--mut);font-size:11px}
+.cap{color:var(--mut);font-size:12px;margin:10px 0 4px}
+.tr{display:grid;grid-template-columns:1.3fr 1.2fr 1fr .8fr;gap:6px;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
+.tr.u{grid-template-columns:1.4fr 1.2fr 1fr}
+.tr span:not(:first-child){text-align:right}.tr.hd{color:var(--mut);font-size:12px}
+.note{color:var(--mut);font-size:12px;text-align:center;padding:10px}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(92vw,420px);padding:14px 18px;z-index:20;text-align:center;font-size:14px;background:rgba(20,12,30,.88)}#toast[hidden]{display:none}
+.l3{width:150px;margin:0 auto 2px;perspective:700px}
+.l3 img{width:100%;height:auto;display:block;transition:transform .18s ease-out;animation:fl 5s ease-in-out infinite;filter:drop-shadow(0 16px 26px rgba(214,41,118,.38))}
+@keyframes fl{0%,100%{translate:0 0}50%{translate:0 -8px}}
+@media (prefers-reduced-motion:reduce){.l3 img{animation:none}}
+footer a{color:var(--mut)}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:30px 0 20px}
+</style></head><body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="wrap">
+<nav class="glass"><div class="brand"><img src="/logo-3d.png" alt="">FollowPulse</div><div style="display:flex;gap:8px"><button class="btn ghost sm" id="inst">Install app</button><button class="btn sm" id="goPro">Go Pro</button></div></nav>
+
+<section class="hero">
+<div class="l3" id="l3"><img src="/logo-3d.png" alt="FollowPulse logo" width="150" height="156"></div>
+<span class="badge" id="demo" hidden>Demo data</span>
+<h1>Watch Instagram followers <span class="grad">rise &amp; fall</span></h1>
+<p>Daily follower tracking for public celebrity accounts. See who is gaining, who is losing, and by how much.</p>
+<button class="btn ghost" id="adminBtn">Admin: add account</button>
+<form class="form" id="addForm" hidden><input id="u" placeholder="Instagram username"><input id="k" type="password" placeholder="Admin key" style="max-width:140px"><button class="btn">Add</button></form>
+<div class="msg" id="msg"></div>
+</section>
+
+<section class="stats">
+<div class="stat glass"><b id="s1">–</b><span>Accounts tracked</span></div>
+<div class="stat glass"><b id="s2">–</b><span>Total followers</span></div>
+<div class="stat glass"><b id="s3" class="up">–</b><span>Top gainer (24h)</span></div>
+</section>
+
+<div class="bar" id="pills">
+<button class="pill on" data-s="subs">Followers</button><button class="pill" data-s="h1" id="p1">1 hour</button><button class="pill" data-s="d2" id="p2">2 hours</button><button class="pill" data-s="d5" id="p5">5 hours</button><button class="pill" data-s="d1">24h</button><button class="pill" data-s="d7">7 days</button><button class="pill" data-s="d30">30 days</button>
+</div>
+<div id="list"></div>
+
+<div class="ad glass">Ad space – paste your Google AdSense code here</div>
+
+<h2 id="pricing" class="grad">Go Pro</h2>
+<section class="plans">
+<div class="plan glass"><h3>Free</h3><div class="price">$0</div>
+<ul><li>Top celebrity accounts</li><li>Daily updates</li><li>Growth charts</li></ul></div>
+<div class="plan glass pro"><h3>Pro</h3><div class="price">$4.99<small> / month</small></div>
+<ul><li>Track your own accounts (up to 50)</li><li>Gain/loss email alerts</li><li>CSV export</li><li>No ads</li></ul><button class="btn" id="proBtn" style="margin-top:16px;width:100%">Choose Pro</button></div>
+</section>
+<form class="form" id="wl" style="margin-top:18px"><input id="em" type="email" placeholder="Your email for early access"><button class="btn">Join waitlist</button></form>
+<div class="msg" id="wmsg" style="text-align:center"></div>
+
+<footer><div style="margin-bottom:8px"><a href="/about.html">About &amp; Contact</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="/disclaimer.html">Disclaimer</a> · <a href="/refund.html">Refunds</a> · <a href="/install.html">Install app</a></div>FollowPulse is not affiliated with or endorsed by Instagram. Counts are public data and may differ slightly from the app.</footer>
+</div>
+
+<div id="modal"><div class="glass"><div class="mh"><b id="mt"></b><button id="x" aria-label="Close">×</button></div>
+<div class="kpis" id="kpis"></div>
+<div class="bar" id="rng"><button class="pill" data-r="0.5">30 min</button><button class="pill" data-r="1">1 hour</button><button class="pill" data-r="2">2 hours</button><button class="pill" data-r="5">5 hours</button><button class="pill" data-r="24">24h</button><button class="pill" data-r="168">7 days</button><button class="pill" data-r="720">30 days</button><button class="pill on" data-r="0">All</button></div>
+<div id="ch"><div class="cap">Followers (Indian time)</div><canvas id="c1" height="170"></canvas>
+<div class="cap">Change since previous update</div><canvas id="c2" height="120"></canvas></div>
+<div class="note" id="cn" hidden></div><div class="note" id="rn"></div>
+<div class="bar" id="tabs" style="margin-top:16px"><button class="pill on" data-v="day">By date</button><button class="pill" data-v="upd">Every update</button></div>
+<div id="tbl"></div>
+<div id="admrm" hidden><button class="btn ghost" id="rm" style="margin-top:16px;width:100%;color:#fb7185">Remove this account from tracking</button></div></div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const short=n=>n==null?'–':n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+const fmt=n=>n==null?'–':(n>0?'+':n<0?'−':'')+Math.abs(n).toLocaleString();
+const cls=n=>n>0?'up':n<0?'down':'';
+let data=[],sort='subs',charts=[],cur=null,range=0,view='day',META={hours:5};
+const every=()=>{const x=META.hours||5;return x<1?Math.round(x*60)+' minutes':x+(x===1?' hour':' hours')};
+const IST='Asia/Kolkata',ts=x=>x.t||Date.parse(x.day+'T12:00:00Z');
+const fT=t=>new Date(t).toLocaleString('en-IN',{timeZone:IST,day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
+const fS=t=>new Date(t).toLocaleDateString('en-IN',{timeZone:IST,day:'numeric',month:'short'});
+const fD=t=>new Date(t).toLocaleDateString('en-IN',{timeZone:IST,day:'numeric',month:'short',year:'numeric'});
+const dKey=t=>new Date(t+19800000).toISOString().slice(0,10);
+const ago=t=>{const m=Math.max(0,Math.round((Date.now()-t)/6e4));return m<2?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+'h ago':Math.round(m/1440)+'d ago'};
+const dur=ms=>{const m=Math.round(ms/6e4);return m<60?m+' min':m<1440?+(m/60).toFixed(1)+'h':Math.round(m/1440)+'d'};
+const pct=(d,b)=>b?(d>0?'+':'')+(d/b*100).toFixed(2)+'%':'–';
+
+function say(el,t,ok){el.textContent=t;el.className='msg'+(ok?' ok':'')}
+function render(){
+  const L=[...data].sort((a,b)=>(b[sort]==null?-1e18:b[sort])-(a[sort]==null?-1e18:a[sort]));
+  $('list').innerHTML=L.length?L.map(c=>`<div class="row glass" data-id="${esc(c.id)}">
+    <div class="av">${esc((c.title||'?')[0].toUpperCase())}${c.thumb?`<img src="${esc(c.thumb)}" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>
+    <div class="nm"><b>${esc(c.title)}</b><span>${esc(c.handle)}${c.t?' · '+ago(c.t):''}</span></div>
+    <div class="num"><b>${c.subs==null?'–':c.subs.toLocaleString()}</b><div class="chips">${[['1h',c.h1],['2h',c.d2],['5h',c.d5],['24h',c.d1],['7d',c.d7],['30d',c.d30]].filter(([l,v])=>v!=null||(l!='2h'&&l!='5h')).map(([l,v])=>`<span class="chip ${cls(v)}">${l} ${fmt(v)}</span>`).join('')}</div></div></div>`).join('')
+    :'<p style="text-align:center;color:var(--mut)">No accounts yet.</p>';
+  ['d2','d5'].forEach(k=>{$('p'+k[1]).hidden=!data.some(c=>c[k]!=null)});
+  $('s1').textContent=data.length;
+  $('s2').textContent=short(data.reduce((a,c)=>a+(c.subs||0),0));
+  const g=[...data].filter(c=>c.d1!=null).sort((a,b)=>b.d1-a.d1)[0];
+  $('s3').textContent=g?g.handle+' '+fmt(g.d1):'Soon';
+}
+async function load(){
+  try{const r=await fetch('/api/accounts');if(!r.ok)throw new Error('server error '+r.status);data=await r.json();if(!Array.isArray(data))throw new Error(data.error||'bad response');render()}
+  catch(e){$('list').innerHTML='<div class="note">Could not load the accounts ('+esc(e.message)+'). The site functions may not have deployed correctly.</div>'}
+}
+async function show(id){
+  const a=data.find(x=>x.id===id);
+  const hist=await (await fetch('/api/history?id='+encodeURIComponent(id))).json();
+  cur={a,h:hist.map(x=>({t:ts(x),subs:x.subs}))};range=0;view='day';$('admrm').hidden=$('addForm').hidden;
+  $('mt').textContent=a.title+' ('+a.handle+')';$('modal').classList.add('on');
+  mark('rng','r',0);mark('tabs','v','day');paint();
+}
+function mark(box,k,v){document.querySelectorAll('#'+box+' .pill').forEach(p=>p.classList.toggle('on',p.dataset[k]===String(v)))}
+function daily(pts){
+  const m=new Map();pts.forEach(p=>m.set(dKey(p.t),p));
+  const r=[...m.values()];
+  return r.map((p,i)=>({t:p.t,subs:p.subs,d:i?p.subs-r[i-1].subs:null,p:i?pct(p.subs-r[i-1].subs,r[i-1].subs):'–'}));
+}
+function paint(){
+  const pts=cur.h;if(!pts.length)return;
+  const H=36e5,last=pts[pts.length-1];
+  const diffs=pts.map((p,i)=>i?p.subs-pts[i-1].subs:0);
+  let bi=0,ok=pts.length>1,since=false;
+  if(range&&ok){
+    const target=last.t-range*H+Math.min(30*6e4,range*H*.25);
+    bi=-1;for(let i=pts.length-1;i>=0;i--)if(pts[i].t<=target){bi=i;break}
+    if(bi<0){bi=0;since=true}else ok=last.t-pts[bi].t<=range*H*1.5+10*6e4;
+  }
+  const sel=pts.slice(bi),d=diffs.slice(bi),first=sel[0],chg=last.subs-first.subs;
+  const RL={0:'all time',0.5:'last 30 min',1:'last hour',2:'last 2 hours',5:'last 5 hours',24:'last 24 hours',168:'last 7 days',720:'last 30 days'};
+  $('kpis').innerHTML=`<div class="kpi"><b>${last.subs.toLocaleString()}</b><span>Followers now</span></div>
+  <div class="kpi">${ok?`<b class="${cls(chg)}">${fmt(chg)}</b><span>${pct(chg,first.subs)} · ${since?'since first record':RL[range]}</span>`:`<b>–</b><span>no data for ${RL[range]} yet</span>`}</div>
+  <div class="kpi"><b>${ago(last.t)}</b><span>${fT(last.t)} IST</span></div>`;
+  $('ch').hidden=!ok;$('cn').hidden=ok;
+  if(!ok)$('cn').textContent=pts.length<2?'Changes will appear after the next update.':'No update fits this period yet. Updates run about every '+every()+', so pick a longer range.';
+  if(ok&&window.Chart){
+    Chart.defaults.color='rgba(255,255,255,.7)';
+    const long=last.t-first.t>3*864e5,labels=sel.map(p=>long?fS(p.t):fT(p.t)),full=sel.map(p=>fT(p.t)+' IST'),grid={color:'rgba(255,255,255,.08)'};
+    const opt=()=>({plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>full[i[0].dataIndex]}}},scales:{x:{grid,ticks:{maxTicksLimit:5,maxRotation:0}},y:{grid}}});
+    charts.forEach(c=>c.destroy());
+    charts=[
+      new Chart($('c1'),{type:'line',data:{labels,datasets:[{label:'Followers',data:sel.map(p=>p.subs),borderColor:'#fa7e1e',backgroundColor:'rgba(214,41,118,.25)',fill:true,tension:.3,pointRadius:sel.length<40?3:0}]},options:opt()}),
+      new Chart($('c2'),{type:'bar',data:{labels,datasets:[{label:'Change',data:d,backgroundColor:d.map(x=>x>=0?'#4ade80':'#fb7185'),borderRadius:4}]},options:opt()})
+    ];
+  }
+  const T=dKey(Date.now());let html;
+  if(view==='day'){
+    const rows=daily(pts).reverse();
+    html='<div class="tr hd"><span>Date (IST)</span><span>Followers</span><span>Change</span><span>%</span></div>'+
+      rows.map(r=>`<div class="tr"><span>${fD(r.t)}${dKey(r.t)===T?' <small>(today)</small>':''}</span><span>${r.subs.toLocaleString()}</span><span class="${cls(r.d)}">${fmt(r.d)}</span><span class="${cls(r.d)}">${r.p}</span></div>`).join('');
+  }else{
+    html='<div class="tr u hd"><span>Time (IST)</span><span>Followers</span><span>Change</span></div>'+
+      pts.map((p,i)=>({p,df:i?p.subs-pts[i-1].subs:null})).reverse().slice(0,150)
+        .map(r=>`<div class="tr u"><span>${fT(r.p.t)}</span><span>${r.p.subs.toLocaleString()}</span><span class="${cls(r.df)}">${fmt(r.df)}</span></div>`).join('');
+  }
+  if(pts.length<2)html+='<div class="note">Changes will appear after the next update.</div>';
+  $('tbl').innerHTML=html;
+}
+async function post(url,body,headers){
+  const r=await fetch(url,{method:'POST',headers:headers||{},body:JSON.stringify(body)});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||'Error');return j;
+}
+$('list').onclick=e=>{const r=e.target.closest('.row');if(r)show(r.dataset.id)};
+$('modal').onclick=e=>{if(e.target.id==='modal'||e.target.id==='x')$('modal').classList.remove('on')};
+$('pills').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;
+  document.querySelectorAll('#pills .pill').forEach(x=>x.classList.toggle('on',x===p));sort=p.dataset.s;render()};
+$('rng').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;range=+p.dataset.r;mark('rng','r',range);paint()};
+$('tabs').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;view=p.dataset.v;mark('tabs','v',view);paint()};
+(function(){const l=$('l3'),im=l.firstElementChild,cl=v=>Math.max(-1,Math.min(1,v));
+  const tilt=(x,y)=>{const r=l.getBoundingClientRect();im.style.transform='rotateY('+cl((x-r.left-r.width/2)/(innerWidth/2))*24+'deg) rotateX('+cl((y-r.top-r.height/2)/(innerHeight/2))*-20+'deg)'};
+  addEventListener('pointermove',e=>tilt(e.clientX,e.clientY));
+  addEventListener('touchend',()=>setTimeout(()=>{im.style.transform=''},500));
+  document.addEventListener('mouseleave',()=>{im.style.transform=''});
+})();
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{t.hidden=true},6000)}
+function showPro(){toast('🚀 Pro is coming soon — we will update it later. Join the waitlist below to get early access.');$('wl').scrollIntoView({behavior:'smooth',block:'center'})}
+$('goPro').onclick=showPro;$('proBtn').onclick=showPro;
+$('adminBtn').onclick=()=>{$('addForm').hidden=!$('addForm').hidden};
+try{$('k').value=localStorage.getItem('fpk')||''}catch(e){}
+$('addForm').onsubmit=async e=>{e.preventDefault();say($('msg'),'Adding…',1);
+  try{await post('/api/add',{q:$('u').value},{'X-Admin-Key':$('k').value});
+    try{localStorage.setItem('fpk',$('k').value)}catch(e){}
+    $('u').value='';say($('msg'),'Added ✓',1);load()}catch(err){say($('msg'),err.message)}};
+$('wl').onsubmit=async e=>{e.preventDefault();
+  try{await post('/api/waitlist',{email:$('em').value});$('em').value='';say($('wmsg'),'You are on the list ✓',1)}catch(err){say($('wmsg'),err.message)}};
+$('rm').onclick=async()=>{
+  if(!$('k').value){alert('Enter your admin key in the box at the top first.');return}
+  if(!confirm('Remove '+cur.a.handle+'? Its saved history will be deleted and it will stop using credits.'))return;
+  try{await post('/api/remove',{id:cur.a.id},{'X-Admin-Key':$('k').value});
+    $('modal').classList.remove('on');say($('msg'),'Removed ✓',1);load()}catch(err){alert(err.message)}};
+fetch('/api/meta').then(r=>r.json()).then(m=>{META=m;$('demo').hidden=!m.demo});
+load();
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+let dp=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
+addEventListener('appinstalled',()=>{$('inst').hidden=true});
+$('inst').hidden=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+$('inst').onclick=async()=>{
+  if(dp){dp.prompt();dp=null}
+  else alert('To install the app:\n\niPhone: tap the Share button, then "Add to Home Screen".\nAndroid: tap the ⋮ menu, then "Install app" or "Add to Home screen".');
+};
+</script><div id="toast" class="glass" hidden role="status"></div>
+<script src="/site.js"></script></body></html>
