@@ -83,6 +83,12 @@ input::placeholder{color:var(--mut)}
 .pm{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:12.5px;color:var(--mut)}.pm b{color:#fff;font-weight:700}
 .pc{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .ph2{display:flex;justify-content:space-between;align-items:center;margin:6px 0 8px;font-weight:700}
+.ev{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);margin-bottom:6px;font-size:13px}
+.ev b{display:block;font-size:13.5px}.ev span{color:var(--mut)}
+.ev.hi{border-color:rgba(251,113,133,.55)}.ev.md{border-color:rgba(251,191,36,.5)}
+.st{display:inline-block;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;margin-bottom:8px}
+.st.ok{background:rgba(74,222,128,.14);color:#4ade80;border:1px solid rgba(74,222,128,.4)}.st.warn{background:rgba(251,191,36,.14);color:#fbbf24;border:1px solid rgba(251,191,36,.45)}
+.tr.gp{grid-template-columns:1fr;font-size:12px;color:#fbbf24;background:rgba(251,191,36,.08);border-radius:10px;padding:7px 10px;margin:3px 0;border-bottom:0}
 footer a{color:var(--mut)}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:30px 0 20px}
 </style></head><body>
@@ -127,7 +133,9 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:30px 0 20px}
 
 <div id="modal"><div class="glass"><div class="mh"><b id="mt"></b><button id="x" aria-label="Close">×</button></div>
 <div id="prof"></div>
-<div id="posts"></div>
+<div class="bar" id="mtabs"><button class="pill on" data-m="det">Details</button><button class="pill" data-m="eng">Post engagement</button></div>
+<div id="pane-det">
+<div id="act"></div>
 <div class="kpis" id="kpis"></div>
 <div class="bar" id="rng"><button class="pill" data-r="0.5">30 min</button><button class="pill" data-r="1">1 hour</button><button class="pill" data-r="2">2 hours</button><button class="pill" data-r="3">3 hours</button><button class="pill" data-r="5">5 hours</button><button class="pill" data-r="24">24h</button><button class="pill" data-r="168">7 days</button><button class="pill" data-r="720">30 days</button><button class="pill on" data-r="0">All</button></div>
 <div id="ch"><div class="cap">Followers (Indian time)</div><canvas id="c1" height="170"></canvas>
@@ -135,6 +143,8 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:30px 0 20px}
 <div class="note" id="cn" hidden></div><div class="note" id="rn"></div>
 <div class="bar" id="tabs" style="margin-top:16px"><button class="pill on" data-v="day">By date</button><button class="pill" data-v="upd">Every update</button></div>
 <div id="tbl"></div>
+</div>
+<div id="pane-eng" hidden><div id="actp"></div><div id="posts"></div></div>
 <div id="admrm" hidden><button class="btn ghost" id="rm" style="margin-top:16px;width:100%;color:#fb7185">Remove this account from tracking</button></div></div></div>
 
 <script>
@@ -187,7 +197,7 @@ let curPosts=null,psort='new';
 async function loadPosts(a){
   $('posts').innerHTML='';curPosts=null;
   try{const r=await fetch('/api/posts?id='+encodeURIComponent(a.id));const j=await r.json();curPosts={f:j.followers||a.subs,list:j.posts||[]}}catch(e){curPosts={f:a.subs,list:[]}}
-  paintPosts();
+  paintPosts();paintAct();
 }
 function paintPosts(){
   if(!curPosts)return;const {f,list}=curPosts;
@@ -203,13 +213,53 @@ function paintPosts(){
     <div class="pm">${p.t?fD(p.t):''}${p.type?' · '+p.type:''}</div>${p.cap?`<div class="pc">${esc(p.cap)}</div>`:''}</div></${tag}>`}).join('')}</div>`;
   $('psort').onclick=e=>{const b=e.target.closest('.pill');if(!b)return;psort=b.dataset.p;paintPosts()};
 }
+function analyze(pts,f){
+  const out=[];if(pts.length<9)return{ok:false,need:9-pts.length,events:out,total:0};
+  const rows=[];for(let i=1;i<pts.length;i++){const d=(pts[i].t-pts[i-1].t)/36e5;if(d<=0)continue;const delta=pts[i].subs-pts[i-1].subs;rows.push({t:pts[i].t,d,delta,r:delta/d})}
+  if(rows.length<8)return{ok:false,need:8-rows.length,events:out,total:0};
+  const ab=rows.map(x=>Math.abs(x.r)).sort((a,b)=>a-b),med=ab[Math.floor(ab.length/2)],base=Math.max(med,f*1e-5);
+  for(const x of rows){const m=Math.abs(x.r)/base,big=Math.abs(x.delta);
+    if(big>=f*0.0003&&m>=6)out.push({...x,mult:m,sev:(m>=12&&big>=f*0.002)?'hi':'md'})}
+  out.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+  return{ok:true,events:out.slice(0,5),total:out.length,base}
+}
+function analyzePosts(list){
+  const ev=[],L=(list||[]).filter(p=>p.l>=0);if(L.length<8)return ev;
+  const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
+  const ml=med(L.map(p=>p.l)),mr=med(L.map(p=>p.c/Math.max(p.l,1)));
+  for(const p of L){const r=p.c/Math.max(p.l,1);
+    if(ml>0&&p.l>=5*ml)ev.push({p,sev:'md',txt:'Likes are '+(p.l/ml).toFixed(1)+'× this account’s usual'});
+    else if(mr>0&&p.l>=ml*0.5&&(r>=8*mr||r<=mr/8))ev.push({p,sev:'md',txt:r>mr?'Far more comments than usual compared with its likes':'Far fewer comments than usual compared with its likes'})}
+  return ev.slice(0,3)
+}
+const durTxt=h=>h<1?Math.round(h*60)+' min':h<48?(Math.round(h*10)/10)+' h':Math.round(h/24)+' days';
+function paintAct(){
+  if(!cur)return;const a=cur.a,f=a.subs||0,A=analyze(cur.h,f),P=curPosts?analyzePosts(curPosts.list):[];
+  const note='<div class="note" style="text-align:left">Unusual does not mean fake. A viral post, giveaway, news mention or a shout-out can look like this, and sudden drops can happen when Instagram removes fake accounts. This is a hint, not proof.</div>';
+  let hf='<div class="ph2"><span>Follower activity check</span></div>';
+  if(!A.ok)hf+=`<div class="note">We need a few more updates (about ${A.need} more) to learn what is normal for this account.</div>`;
+  else{
+    hf+=`<div class="st ${A.events.length?'warn':'ok'}">${A.events.length?'⚠ Unusual follower activity found':'✓ Nothing unusual in follower growth'}</div>`;
+    hf+=A.events.map(x=>`<div class="ev ${x.sev}"><div>${x.delta>0?'▲':'▼'}</div><div><b>${x.delta>0?'+':'−'}${Math.abs(x.delta).toLocaleString()} followers in ${durTxt(x.d)}</b><span>About ${Math.round(x.mult)}× this account’s usual pace · ${fT(x.t)} IST${x.sev==='hi'?' · large':''}</span></div></div>`).join('');
+    if(A.total>A.events.length)hf+=`<div class="note">${A.total-A.events.length} smaller event(s) not shown.</div>`;
+    hf+=note
+  }
+  $('act').innerHTML=hf;
+  let hp='';
+  if(curPosts&&curPosts.list.length>=8){
+    hp='<div class="ph2"><span>Post activity check</span></div>'+`<div class="st ${P.length?'warn':'ok'}">${P.length?'⚠ Unusual posts found':'✓ Nothing unusual in recent posts'}</div>`+
+      P.map(x=>`<div class="ev ${x.sev}"><div>◆</div><div><b>Post of ${x.p.t?fD(x.p.t):'recent date'}</b><span>${esc(x.txt)}</span></div></div>`).join('')+(P.length?note:'')
+  }
+  $('actp').innerHTML=hp
+}
 async function show(id){
   const a=data.find(x=>x.id===id);
   const hist=await (await fetch('/api/history?id='+encodeURIComponent(id))).json();
   cur={a,h:hist.map(x=>({t:ts(x),subs:x.subs}))};range=0;view='day';$('admrm').hidden=$('addForm').hidden;
-  $('mt').textContent='Account details';paintProfile(a);loadPosts(a);$('modal').classList.add('on');
-  mark('rng','r',0);mark('tabs','v','day');paint();
+  $('mt').textContent='Account details';paintProfile(a);paintAct();loadPosts(a);$('modal').classList.add('on');
+  mark('rng','r',0);mark('tabs','v','day');mtab('det');paint();
 }
+function mtab(m){mark('mtabs','m',m);$('pane-det').hidden=m!=='det';$('pane-eng').hidden=m!=='eng'}
 function mark(box,k,v){document.querySelectorAll('#'+box+' .pill').forEach(p=>p.classList.toggle('on',p.dataset[k]===String(v)))}
 function daily(pts){
   const m=new Map();pts.forEach(p=>m.set(dKey(p.t),p));
@@ -249,9 +299,14 @@ function paint(){
     html='<div class="tr hd"><span>Date (IST)</span><span>Followers</span><span>Change</span><span>%</span></div>'+
       rows.map(r=>`<div class="tr"><span>${fD(r.t)}${dKey(r.t)===T?' <small>(today)</small>':''}</span><span>${r.subs.toLocaleString()}</span><span class="${cls(r.d)}">${fmt(r.d)}</span><span class="${cls(r.d)}">${r.p}</span></div>`).join('');
   }else{
-    html='<div class="tr u hd"><span>Time (IST)</span><span>Followers</span><span>Change</span></div>'+
-      pts.map((p,i)=>({p,df:i?p.subs-pts[i-1].subs:null})).reverse().slice(0,150)
-        .map(r=>`<div class="tr u"><span>${fT(r.p.t)}</span><span>${r.p.subs.toLocaleString()}</span><span class="${cls(r.df)}">${fmt(r.df)}</span></div>`).join('');
+    const rows=pts.map((p,i)=>({p,df:i?p.subs-pts[i-1].subs:null})),gs=[];
+    for(let i=Math.max(1,pts.length-13);i<pts.length;i++)gs.push(pts[i].t-pts[i-1].t);
+    const med=gs.length?[...gs].sort((a,b)=>a-b)[Math.floor(gs.length/2)]:0,recent=Date.now()-3*864e5;let out='';
+    for(let i=rows.length-1,n=0;i>=0&&n<150;i--,n++){const r=rows[i];
+      out+=`<div class="tr u"><span>${fT(r.p.t)}</span><span>${r.p.subs.toLocaleString()}</span><span class="${cls(r.df)}">${fmt(r.df)}</span></div>`;
+      if(i>0){const g=r.p.t-pts[i-1].t;
+        if(med>0&&r.p.t>recent&&g>med*1.7&&g>=45*6e4&&g<=24*36e5)out+=`<div class="tr gp"><span>No update was saved between ${fT(pts[i-1].t)} and ${fT(r.p.t)} (${durTxt(g/36e5)} gap)</span></div>`}}
+    html='<div class="tr u hd"><span>Time (IST)</span><span>Followers</span><span>Change</span></div>'+out;
   }
   if(pts.length<2)html+='<div class="note">Changes will appear after the next update.</div>';
   $('tbl').innerHTML=html;
@@ -264,6 +319,7 @@ $('list').onclick=e=>{const r=e.target.closest('.row');if(r)show(r.dataset.id)};
 $('modal').onclick=e=>{if(e.target.id==='modal'||e.target.id==='x')$('modal').classList.remove('on')};
 $('pills').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;
   document.querySelectorAll('#pills .pill').forEach(x=>x.classList.toggle('on',x===p));sort=p.dataset.s;render()};
+$('mtabs').onclick=e=>{const b=e.target.closest('.pill');if(b)mtab(b.dataset.m)};
 $('rng').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;range=+p.dataset.r;mark('rng','r',range);paint()};
 $('tabs').onclick=e=>{const p=e.target.closest('.pill');if(!p)return;view=p.dataset.v;mark('tabs','v',view);paint()};
 let tt;function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{t.hidden=true},6000)}
