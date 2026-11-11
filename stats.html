@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
-<title>App stats – FollowPulse</title><meta name="theme-color" content="#0b0713">
+<title>App stats – CountPro</title><meta name="theme-color" content="#0b0713">
 <style>
 :root{--g:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);--mut:rgba(255,255,255,.65)}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0b0713;color:#fff;font:15px/1.5 -apple-system,"Segoe UI",system-ui,sans-serif;padding:16px}
@@ -12,14 +12,28 @@ button{margin-top:10px;width:100%;border:0;border-radius:99px;padding:12px;color
 .n{color:var(--mut);font-size:12px}#m{color:#fb7185;min-height:20px;font-size:13px;margin-top:8px}
 </style></head><body><div class="w">
 <h1>App &amp; install stats</h1>
+<div class="g"><b>Install check</b><p class="n" style="margin:6px 0 0">Checks that every file the app needs is on your live site.</p><button id="ic" type="button">Check install files</button><div id="icr" style="margin-top:10px;font-size:13px"></div></div>
 <div class="g"><input id="k" type="password" placeholder="Admin key"><button id="b">Show stats</button><div id="m"></div></div>
 <div id="o" hidden>
 <div class="g k" id="k4"></div>
+<div class="g"><b>Update log</b><p class="n" style="margin:6px 0 8px">What the 30-minute timer and the update job did. Use it to see why an update is missing.</p><div id="lg">Loading…</div></div>
 <div class="g"><b>Last 14 days (Indian dates)</b><div id="tb"></div></div>
 <p class="n">Taps = people who pressed Install app. Installed = installs reported by Android Chrome (iPhone does not report installs). Opened = different phones that opened the installed app that day (works on iPhone too). Counts are approximate.</p>
 </div></div>
 <script>
 var $=function(i){return document.getElementById(i)};
+function loadLog(){
+  fetch('/api/snaplog',{headers:{'X-Admin-Key':$('k').value}}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Error');return j})}).then(function(log){
+    if(!log.length){$('lg').textContent='Nothing logged yet. It fills after the next 30-minute timer run (and after you upload the new files).';return}
+    var f=function(t){return new Date(t).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true})};
+    var ticks=log.filter(function(x){return x.kind==='tick'}),warn='';
+    for(var i=0;i<ticks.length-1&&i<40;i++){var gap=ticks[i].t-ticks[i+1].t;if(gap>45*6e4)warn+='<div style="color:#fbbf24">⚠ The timer did not run between '+f(ticks[i+1].t)+' and '+f(ticks[i].t)+'</div>'}
+    $('lg').innerHTML=(warn||'<div style="color:#4ade80">✓ The timer ran on schedule in the recent log.</div>')+'<div style="margin-top:8px">'+log.slice(0,25).map(function(x){
+      if(x.kind==='tick')return '<div class="t" style="grid-template-columns:1.3fr 2fr"><span>'+f(x.t)+'</span><span style="text-align:right">Timer · '+(x.status==='202'?'started the update job ✓':'result '+x.status+' ⚠')+'</span></div>';
+      var bad=(x.failed||[]).length;return '<div class="t" style="grid-template-columns:1.3fr 2fr"><span>'+f(x.t)+'</span><span style="text-align:right">Update · '+x.ok+'/'+x.due+' saved'+(bad?' ⚠ '+x.failed.map(function(z){return z.id+': '+z.err}).join('; '):' ✓')+'</span></div>'}).join('')+'</div>';
+  }).catch(function(e){$('lg').textContent=e.message});
+}
+
 try{$('k').value=localStorage.getItem('fpk')||''}catch(e){}
 $('b').onclick=function(){
   $('m').textContent='';
@@ -29,7 +43,24 @@ $('b').onclick=function(){
     $('k4').innerHTML=[[t.install_tap||0,'Install button taps'],[t.installed||0,'Installed (Android)'],[s.unique||0,'Different phones using the app'],[td.app_open||0,'Phones that opened it today']].map(function(x){return '<div><b>'+x[0].toLocaleString()+'</b><span>'+x[1]+'</span></div>'}).join('');
     var ks=Object.keys(days).sort().reverse().slice(0,14);
     $('tb').innerHTML='<div class="t h"><span>Date</span><span>Taps</span><span>Installed</span><span>Opened</span></div>'+ks.map(function(d){var x=days[d];return '<div class="t"><span>'+d+'</span><span>'+(x.install_tap||0)+'</span><span>'+(x.installed||0)+'</span><span>'+(x.app_open||0)+'</span></div>'}).join('');
-    $('o').hidden=false;
+    $('o').hidden=false;loadLog();
   }).catch(function(e){$('m').textContent=e.message});
+};
+
+var need=['/manifest.json','/sw.js','/icon-192.png','/icon-512.png','/icon-maskable-512.png','/apple-touch-icon.png','/logo.png','/og-image.jpg','/site.js','/install.html'];
+$('ic').onclick=function(){
+  var out=$('icr');out.textContent='Checking…';
+  Promise.all(need.map(function(u){return fetch(u+'?c='+Date.now(),{cache:'no-store'}).then(function(r){return [u,r.ok]}).catch(function(){return [u,false]})})).then(function(res){
+    var miss=res.filter(function(x){return !x[1]}).map(function(x){return x[0]});
+    var html=res.map(function(x){return '<div>'+(x[1]?'✅':'❌')+' '+x[0]+'</div>'}).join('');
+    return Promise.all([fetch('/',{cache:'no-store'}).then(function(r){return r.text()}).catch(function(){return ''}),fetch('/manifest.json',{cache:'no-store'}).then(function(r){return r.json()}).catch(function(){return null})]).then(function(z){
+      var linked=/rel=["']manifest["']/.test(z[0]),m=z[1],sizes=m&&m.icons?m.icons.map(function(i){return i.sizes}).join(' '):'';
+      html+='<div>'+(linked?'✅':'❌')+' home page links to the manifest</div><div>'+(m?'✅':'❌')+' manifest readable'+(m?' ('+m.name+', icons: '+sizes+')':'')+'</div>';
+      var ok=!miss.length&&linked&&m;
+      html='<div style="margin-bottom:8px;font-weight:700;color:'+(ok?'#4ade80':'#fb7185')+'">'+(ok?'Everything needed for install is on your site.':'Missing: '+(miss.join(', ')||'see the list below'))+'</div>'+html;
+      if(ok)html+='<div class="n" style="margin-top:8px">If install still fails, open the site in Chrome (not the WhatsApp or Instagram browser), remove any older installed copy, and try again.</div>';
+      out.innerHTML=html;
+    });
+  });
 };
 </script></body></html>
